@@ -7,114 +7,114 @@
  
   
   #include <Ultrasonic.h>
+  
   //SensorX=Sensor 1
   #define pino_trigger1 8//Sensor X
   #define pino_echo1 7//Sensor X
    float cmMsecX;
    float lastcmMsecX;
-   double setPointx = 30;
-   double  KPx = 0, KIx = 0, KDx = 0;
-   double  Px = 1, Ix = 1, Dx = 0;
-   double PIDx = 0;
-   double FowardPWMx = 0;
-   double ReversePWMx = 0;
-   double errorX = 0;
+   byte setPointx = 30;
+   Ultrasonic ultrasonic1(pino_trigger1, pino_echo1);
    
-  //MotorX= Motor 1
-  #define Rpwmx 3//Motor X Direta
-  #define Lpwmx 9//Motor X Esquerda
-  
   //SensorY=Sensor 2
   #define pino_trigger2 13//Sensor Y
   #define pino_echo2 12//Sensor Y
   float cmMsecY;
   float lastcmMsecY;
-  double setPointy = 69;
-  double  KPy = 2, KIy = 0, KDy = 0;
-  double  Py = 1, Iy = 0, Dy = 0;
-  double PIDy = 0;
-  double FowardPWMy = 0;
-   double ReversePWMy = 0;
-  double errorY = 0;
+  byte setPointy = 69;
+  Ultrasonic ultrasonic2(pino_trigger2, pino_echo2);
+  
+  //PIDx
+   double  KPx = 0, KIx = 0, KDx = 0;
+   double  Px = 1, Ix = 1, Dx = 0;
+   double PIDx = 0;
+   byte FowardPWMx = 0;
+   byte ReversePWMx = 0;
+   byte errorX = 0;
+  
+  
+  //PIDy
+   double  KPy = 2, KIy = 0, KDy = 0;
+   double  Py = 1, Iy = 0, Dy = 0;
+   double PIDy = 0;
+   byte FowardPWMy = 0;
+   byte ReversePWMy = 0;
+   byte errorY = 0;
 
+//MotorX= Motor 1
+  #define Rpwmx 3//Motor X Direta
+  #define Lpwmx 9//Motor X Esquerda
   
  //MotorY= Motor 2
   #define Rpwmy 10// Motor Y Direita
   #define Lpwmy 11//Motor Y Esquerda
-
-float Ima;
-float Trava;
-  #define ima 2
-  #define trava 4
   
+  //Periféricos
   
- 
-  long lastProcess;
-  Ultrasonic ultrasonic1(pino_trigger1, pino_echo1);
-  Ultrasonic ultrasonic2(pino_trigger2, pino_echo2);
+    //Imã
+      int Ima=2;
+     
+      
+   //Trava Eixo X
+     int Trava=4;
+     
   
-void setup() {
+   //KIx
+   long lastProcessX;
+   
+    //KIy
+   long lastProcessY;
+    
+void setup()
+{
   Serial.begin(9600);
-  pinMode(Rpwmx, OUTPUT);
-  pinMode(Lpwmx, OUTPUT);
-  pinMode(Rpwmy, OUTPUT);
-  pinMode(Lpwmy, OUTPUT);
-  pinMode(ima, OUTPUT);
-  pinMode(trava, OUTPUT);
-
+  pinMode(Rpwmx, OUTPUT);//Motor 1- X
+  pinMode(Lpwmx, OUTPUT);//Motor 1- X
+  pinMode(Rpwmy, OUTPUT);//Motor 2- Y
+  pinMode(Lpwmy, OUTPUT);//Motor 2- Y
+  pinMode(Ima, OUTPUT);// Imã
+  pinMode(Trava, OUTPUT);// Trava de Bandeja X
   
 }
 
 
-void loop() {
+void loop()
+{
 
+AjustaY();
+AjustaX();
+Retira();
+Devolve();
 
+}
 
-//  Calculo e leitura das distancias X e Y dos sensores ultrassonicos
+void AjustaY()
+{
 
-//sensor X
-  long microsecX = ultrasonic1.timing();
-  cmMsecX = ultrasonic1.convert(microsecX, Ultrasonic::CM);
-  cmMsecX=map(cmMsecX,  4,  38, 0, 100);
- 
 //Sensor Y
  long microsecY = ultrasonic2.timing();
  cmMsecY = ultrasonic2.convert(microsecY, Ultrasonic::CM);
  cmMsecY=map(cmMsecY,  5.65,  42.66, 0, 100);
-
  
-  //implementação PID
-  errorX = setPointx - cmMsecX;
+ //PIDy
   errorY = setPointy - cmMsecY;
+   float deltatimeY = (millis() - lastProcessY) / 1000.0; 
+  lastProcessY = millis();
   
-  float deltatime = (millis() - lastProcess) / 1000.0; 
-  lastProcess = millis();
+  //P
+   Py= errorY * KPy;
+ 
+ //I
+  //Iy += (errorY * KIy) * deltatime;
   
-  Px= errorX * KPx;
-  Py= errorY * KPy;
-  
- // Ix += (errorX * KIx) * deltatime;
- //Iy += (errorY * KIy) * deltatime;
-  
- // Dx = (lastcmMsecX - cmMsecX) *KDx / deltatime;
- //Dy = (lastcmMsecY - cmMsecY) *KDy / deltatime;
- // lastcmMsecX = cmMsecX;
- lastcmMsecY = cmMsecY;
-  
-  PIDx =  Px + Ix + Dx;
-  PIDy = Py + Iy + Dy;
-    
-//Limitação em X
-if(PIDx>255)
-{
-PIDx=255;
-}
-if (PIDx<=0)
-{
-  PIDx=0;
-}
+ //D
+//Dy = (cmMsecY-lastcmMsecY) *KDy / deltatimeY;
 
-//Limitação em Y
+ lastcmMsecY = cmMsecY;
+ 
+ PIDy = Py + Iy + Dy;
+ 
+ //Limitação em Y
 if(PIDy>255)
 {
 PIDy=255;
@@ -125,26 +125,8 @@ if (PIDy<=0)
 }
 
 PIDy=abs(PIDy);
-
-PIDx= map(PIDx,  30,  255, 0, 255);
 PIDy= map(PIDy,  0,  255, 30, 255);
 
-//Saída em X
- if (errorX <0)
-  {
-    // reverse rotation
-    ReversePWMx=PIDx;
-    FowardPWMx=0;
-    analogWrite(Lpwmx, FowardPWMx);
-    analogWrite(Rpwmx, ReversePWMx);
-  } else {
-    // forward rotation
-    FowardPWMx=PIDx;
-    ReversePWMx=0;
-    analogWrite(Lpwmx, FowardPWMx);
-    analogWrite(Rpwmx, ReversePWMx);
-  }
-  
 //Saída em Y
  if (errorY <0)
   {
@@ -161,15 +143,86 @@ PIDy= map(PIDy,  0,  255, 30, 255);
     analogWrite(Rpwmy, ReversePWMy);
   }
 
-    Ima= LOW;
-  Trava= LOW;
-  digitalWrite(ima,Ima);
-  digitalWrite(trava,Trava);
-delay(5000);
-      Ima= HIGH;
-  Trava= HIGH;
-  digitalWrite(ima,Ima);
-  digitalWrite(trava,Trava);}
+if(PIDy>=0){
+controlePWMy =PIDy;
+analogWrite(pCONTROLE2yR, controlePWMy);}
+    else
+    controlePWMy = (PIDy*(-1));
+    analogWrite(pCONTROLE2yL, controlePWMy);
+ 
+ 
+ 
+ 
+ 
+ 
+void ajustaX()
+{
+
+//sensor X
+  long microsecX = ultrasonic1.timing();
+  cmMsecX = ultrasonic1.convert(microsecX, Ultrasonic::CM);
+  cmMsecX=map(cmMsecX,  4,  38, 0, 100);
+ 
+
+
+ 
+  //implementação PID
+  errorX = setPointx - cmMsecX;
+ 
+  
+  float deltatimeX = (millis() - lastProcessX) / 1000.0; 
+  lastProcessX = millis();
+  
+  Px= errorX * KPx;
+ 
+  
+ // Ix += (errorX * KIx) * deltatime;
+
+  
+ // Dx = (cmMsecX-lastcmMsecX ) *KDx / deltatimeX;
+ 
+ // lastcmMsecX = cmMsecX;
+
+  
+  PIDx =  Px + Ix + Dx;
+ 
+    
+//Limitação em X
+if(PIDx>255)
+{
+PIDx=255;
+}
+if (PIDx<=0)
+{
+  PIDx=0;
+}
+
+PIDx=abs(PIDx);
+
+
+
+PIDx= map(PIDx,  30,  255, 0, 255);
+
+
+//Saída em X
+ if (errorX <0)
+  {
+  digitalWrite(porta_rele2, HIGH);
+    // reverse rotation
+    ReversePWMx=PIDx;
+    FowardPWMx=0;
+    analogWrite(Lpwmx, FowardPWMx);
+    analogWrite(Rpwmx, ReversePWMx);
+  } else {
+    // forward rotation
+    FowardPWMx=PIDx;
+    ReversePWMx=0;
+    analogWrite(Lpwmx, FowardPWMx);
+    analogWrite(Rpwmx, ReversePWMx);
+  }
+  
+
+ 
 /*controlePWMx = PIDx;
 analogWrite(pCONTROLE1xR, controlePWMx);
 digitalWrite(5, HIGH);                      
@@ -180,12 +233,7 @@ digitalWrite(5, HIGH);
     analogWrite(pCONTROLE1xL, controlePWMx);
  digitalWrite(5,LOW );                      
   digitalWrite(6,HIGH);   
-if(PIDy>=0){
-controlePWMy =PIDy;
-analogWrite(pCONTROLE2yR, controlePWMy);}
-    else
-    controlePWMy = (PIDy*(-1));
-    analogWrite(pCONTROLE2yL, controlePWMy);
+
 */
   //Exibe informacoes no serial monitor
   Serial.print(" DistanciaX em cm: ");
@@ -209,8 +257,8 @@ analogWrite(pCONTROLE2yR, controlePWMy);}
   Serial.print(ReversePWMy);
    Serial.print(" FowardY: ");
   Serial.print(FowardPWMy);
-     Serial.print(" ima: ");
-  Serial.print(ima);
+     Serial.print(" Ima: ");
+  Serial.print(Ima);
      Serial.print(" Trava: ");
 Serial.print(trava);
 
@@ -218,7 +266,7 @@ Serial.print(trava);
   Serial.print(controlePWMy);
    Serial.print(" yR: ");
   Serial.println(controlePWMy);
-  delay(1000);
+ 
 */
 
 }
