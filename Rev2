@@ -202,12 +202,12 @@ PIDx=abs(PIDx);
 
 
 PIDx= map(PIDx,  30,  255, 0, 255);
-
+ digitalWrite(Trava, HIGH);
 
 //Saída em X
  if (errorX <0)
   {
-  digitalWrite(porta_rele2, HIGH);
+ 
     // reverse rotation
     ReversePWMx=PIDx;
     FowardPWMx=0;
@@ -215,26 +215,16 @@ PIDx= map(PIDx,  30,  255, 0, 255);
     analogWrite(Rpwmx, ReversePWMx);
   } else {
     // forward rotation
+    digitalWrite(Trava, HIGH);
     FowardPWMx=PIDx;
     ReversePWMx=0;
     analogWrite(Lpwmx, FowardPWMx);
     analogWrite(Rpwmx, ReversePWMx);
   }
   
-
+ digitalWrite(Trava, LOW);
  
-/*controlePWMx = PIDx;
-analogWrite(pCONTROLE1xR, controlePWMx);
-digitalWrite(5, HIGH);                      
-  digitalWrite(6, LOW);  
-}
-    else
-    controlePWMx = (PIDx*(-1));
-    analogWrite(pCONTROLE1xL, controlePWMx);
- digitalWrite(5,LOW );                      
-  digitalWrite(6,HIGH);   
 
-*/
   //Exibe informacoes no serial monitor
   Serial.print(" DistanciaX em cm: ");
   Serial.print(cmMsecX); 
