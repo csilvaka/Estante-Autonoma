@@ -64,6 +64,12 @@
    
     //KIy
    long lastProcessY;
+   
+   //Funções
+   void AjustaX();
+   void AjustaY();
+   void Retira();
+   void Devolve();
     
 void setup()
 {
@@ -91,72 +97,62 @@ Devolve();
 void AjustaY()
 {
 
-//Sensor Y
- long microsecY = ultrasonic2.timing();
- cmMsecY = ultrasonic2.convert(microsecY, Ultrasonic::CM);
- cmMsecY=map(cmMsecY,  5.65,  42.66, 0, 100);
- 
- //PIDy
-  errorY = setPointy - cmMsecY;
-   float deltatimeY = (millis() - lastProcessY) / 1000.0; 
-  lastProcessY = millis();
+  //Sensor Y
+   long microsecY = ultrasonic2.timing();
+   cmMsecY = ultrasonic2.convert(microsecY, Ultrasonic::CM);
+   cmMsecY=map(cmMsecY,  5.65,  42.66, 0, 100);
+   
+   //PIDy
+    errorY = setPointy - cmMsecY;
+     float deltatimeY = (millis() - lastProcessY) / 1000.0; 
+    lastProcessY = millis();
+    
+    //P
+     Py= errorY * KPy;
+   
+   //I
+    //Iy += (errorY * KIy) * deltatime;
+    
+   //D
+  //Dy = (cmMsecY-lastcmMsecY) *KDy / deltatimeY;
   
-  //P
-   Py= errorY * KPy;
+   lastcmMsecY = cmMsecY;
+   
+   PIDy = Py + Iy + Dy;
  
- //I
-  //Iy += (errorY * KIy) * deltatime;
-  
- //D
-//Dy = (cmMsecY-lastcmMsecY) *KDy / deltatimeY;
-
- lastcmMsecY = cmMsecY;
- 
- PIDy = Py + Iy + Dy;
- 
- //Limitação em Y
-if(PIDy>255)
-{
-PIDy=255;
-}
-if (PIDy<=0)
-{
-  PIDy=0;
-}
-
-PIDy=abs(PIDy);
-PIDy= map(PIDy,  0,  255, 30, 255);
-
-//Saída em Y
- if (errorY <0)
+   //Limitação em Y
+  if(PIDy>255)
   {
-    // reverse rotation
-    ReversePWMy=(PIDx);
-    FowardPWMy=0;
-    analogWrite(Lpwmy, FowardPWMy);
-    analogWrite(Rpwmy, ReversePWMy);
-  } else {
-    // forward rotation
-    FowardPWMy=(PIDy);
-    ReversePWMy=0;
-    analogWrite(Lpwmy, FowardPWMy);
-    analogWrite(Rpwmy, ReversePWMy);
+  PIDy=255;
   }
+  if (PIDy<=0)
+  {
+    PIDy=0;
+  }
+  
+  PIDy=abs(PIDy);
+  PIDy= map(PIDy,  0,  255, 30, 255);
+  
+  //Saída em Y
+   if (errorY <0)
+    {
+      // reverse rotation
+      ReversePWMy=(PIDx);
+      FowardPWMy=0;
+      analogWrite(Lpwmy, FowardPWMy);
+      analogWrite(Rpwmy, ReversePWMy);
+    } else {
+      // forward rotation
+      FowardPWMy=(PIDy);
+      ReversePWMy=0;
+      analogWrite(Lpwmy, FowardPWMy);
+      analogWrite(Rpwmy, ReversePWMy);
+    }
+}
 
-if(PIDy>=0){
-controlePWMy =PIDy;
-analogWrite(pCONTROLE2yR, controlePWMy);}
-    else
-    controlePWMy = (PIDy*(-1));
-    analogWrite(pCONTROLE2yL, controlePWMy);
  
- 
- 
- 
- 
- 
-void ajustaX()
-{
+void ajustaX();
+
 
 //sensor X
   long microsecX = ultrasonic1.timing();
@@ -250,13 +246,10 @@ PIDx= map(PIDx,  30,  255, 0, 255);
      Serial.print(" Ima: ");
   Serial.print(Ima);
      Serial.print(" Trava: ");
-Serial.print(trava);
+Serial.println(Trava);
+}
 
-  /*Serial.print(" yL: ");
-  Serial.print(controlePWMy);
-   Serial.print(" yR: ");
-  Serial.println(controlePWMy);
+ void Devolve();
  
-*/
 
 }
