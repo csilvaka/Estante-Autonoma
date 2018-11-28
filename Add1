@@ -1,30 +1,93 @@
 
 
 #include <SimpleModbusSlave.h>
+/* Multiplos controle de um Estoque Automatizado e Inteligente
+  10º Semestre de Engenharia de Automação e Controle - Centro Universitario de Jaguariuna - Campus II - Jaguariùna - SP
+  Trabalho de Conclusão de Curso - Estante Autonoma
+  autor: Kaio Silva
+  Versão 01 - 26/10/2018 */
 
+
+
+#include <Ultrasonic.h>
+//SensorX=Sensor 1
+#define pino_trigger1 8//Sensor X
+#define pino_echo1 7//Sensor X
+float cmMsecX;
+float lastcmMsecX;
+double setPointx = 30;
+double  KPx = 0, KIx = 0, KDx = 0;
+double  Px = 1, Ix = 0, Dx = 0;
+double PIDx = 0;
+double FowardPWMx = 0;
+double ReversePWMx = 0;
+double errorX = 0;
+
+//MotorX= Motor 1
+#define Rpwmx 3//Motor X Direta
+#define Lpwmx 9//Motor X Esquerda
+
+//SensorY=Sensor 2
+#define pino_trigger2 13//Sensor Y
+#define pino_echo2 12//Sensor Y
+float cmMsecY;
+float lastcmMsecY;
+double setPointy = 50;
+double  KPy = 5, KIy = 3, KDy = 3 ;
+double  Py = 0, Iy = 0, Dy = 0;
+double PIDy = 0;
+double FowardPWMy = 0;
+double ReversePWMy = 0;
+double errorY = 0;
+float Am1;
+float Am2;
+float Am3;
+float Am4;
+float Am5;
+float Am6;
+float Am7;
+float Am8;
+float Am9;
+float Am10;
+float soma;
+float media;
+
+//MotorY= Motor 2
+#define Rpwmy 10// Motor Y Direita
+#define Lpwmy 11//Motor Y Esquerda
+
+//Imã
+int Ima = 2;
+
+
+//Trava Eixo X
+int Trava = 4;
+
+
+long lastProcess;
+Ultrasonic ultrasonic1(pino_trigger1, pino_echo1);
+Ultrasonic ultrasonic2(pino_trigger2, pino_echo2);
 
 enum 
 {     
-                                                        
-                                           
 NumSetPointx,
 NumSetPointy,
-[NumKPx,
-[NumKIx,
+NumKPx,
+NumKIx,
 NumKDx,
 NumKPy,
 NumKIy,
 NumKDy,
-NUmPIDx,
-NUmPIDy,
-NUmPx,
-NUmIx,
-NUmDx,
-NUmPy,
-NUmIy,
-NUmD,
-NumErrorX,
-NumErrorY,
+NumPIDx,
+NumPIDy,
+NumPx,
+NumIx,
+NumDx,
+NumPy,
+NumIy,
+NumDy,
+NumerrorX,
+NumerrorY,
 NumFowardPWMx,
 NumReversePWMx,
 NumFowardPWMy,
@@ -46,30 +109,27 @@ void setup()
 
 void loop()
 {
-                                                                                  
-                                                                            
-                                            
-  
+ 
   modbus_update();
   
-analoglWrite(SetPointx, holdingRegs[NumSetPointx]);
-analoglWrite(SetPointy, holdingRegs[NumSetPointy]);
-analoglWrite(KPx, holdingRegs[NumKPx]);
-analoglWrite(KIx, holdingRegs[NumKIx]);
-analoglWrite(KDx, holdingRegs[NumKDx]);
-analoglWrite(KPy, holdingRegs[NumKPy]);
-analoglWrite(KIy, holdingRegs[NumKIy]);
-analoglWrite(KDy, holdingRegs[NumKDy]);
-holdingRegs[NUmPIDx] = analogRead(PIDx); 
-holdingRegs[NUmPIDy] = analogRead(PIDy); 
-holdingRegs[NUmPx] = analogRead(Px); 
-holdingRegs[NUmIx] = analogRead(Ix); 
-holdingRegs[NUmDx] = analogRead(Dx);
-holdingRegs[NUmPy] = analogRead(Py); 
-holdingRegs[NUmIy] = analogRead(Iy); 
-holdingRegs[NUmDy] = analogRead(Dy); 
-holdingRegs[NumErrorX] = analogRead(ErrorX); 
-holdingRegs[NumErrorY] = analogRead(ErrorY); 
+analogWrite(setPointx, holdingRegs[NumSetPointx]);
+analogWrite(setPointy, holdingRegs[NumSetPointy]);
+analogWrite(KPx, holdingRegs[NumKPx]);
+analogWrite(KIx, holdingRegs[NumKIx]);
+analogWrite(KDx, holdingRegs[NumKDx]);
+analogWrite(KPy, holdingRegs[NumKPy]);
+analogWrite(KIy, holdingRegs[NumKIy]);
+analogWrite(KDy, holdingRegs[NumKDy]);
+holdingRegs[NumPIDx] = analogRead(PIDx); 
+holdingRegs[NumPIDy] = analogRead(PIDy); 
+holdingRegs[NumPx] = analogRead(Px); 
+holdingRegs[NumIx] = analogRead(Ix); 
+holdingRegs[NumDx] = analogRead(Dx);
+holdingRegs[NumPy] = analogRead(Py); 
+holdingRegs[NumIy] = analogRead(Iy); 
+holdingRegs[NumDy] = analogRead(Dy); 
+holdingRegs[NumerrorX] = analogRead(errorX); 
+holdingRegs[NumerrorY] = analogRead(errorY); 
 holdingRegs[NumFowardPWMx] = analogRead(FowardPWMx);
 holdingRegs[NumReversePWMx] = analogRead(ReversePWMx); 
 holdingRegs[NumFowardPWMy] = analogRead(NumFowardPWMy); 
