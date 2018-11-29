@@ -38,18 +38,7 @@ double PIDy = 0;
 double FowardPWMy = 0;
 double ReversePWMy = 0;
 double errorY = 0;
-float Amy1;
-float Amy2;
-float Amy3;
-float Amy4;
-float Amy5;
-float Amy6;
-float Amy7;
-float Amy8;
-float Amy9;
-float Amy10;
-float somay;
-float mediay;
+
 
 //MotorY= Motor 2
 #define Rpwmy 10// Motor Y Direita
@@ -62,13 +51,17 @@ int Ima = 2;
 //Trava Eixo X
 int Trava = 4;
 
-
-
-
-
 long lastProcess;
 Ultrasonic ultrasonic1(pino_trigger1, pino_echo1);
 Ultrasonic ultrasonic2(pino_trigger2, pino_echo2);
+
+#define      nPy     50        //número de pontos da média móvel 
+long moving_average();       //Função para filtro de média móvel
+
+int       original,          //recebe o valor de AN0
+          filtrado;          //recebe o valor original filtrado
+int       numbers[nPy];        //vetor com os valores para média móvel
+
 
 void setup() {
   Serial.begin(9600);
@@ -102,28 +95,9 @@ void loop() {
   long microsecY = ultrasonic2.timing();
   cmMsecY = ultrasonic2.convert(microsecY, Ultrasonic::CM);
 
-  Amy1 = cmMsecY;
-  delay(10);
-  Amy2 = cmMsecY;
-  delay(10);
-  Amy3 = cmMsecY;
-  delay(10);
-  Amy4 = cmMsecY;
-  delay(10);
-  Amy5 = cmMsecY;
-  delay(10);
-  Amy6 = cmMsecY;
-  delay(10);
-  Amy7 = cmMsecY;
-  delay(10);
-  Amy8 = cmMsecY;
-  delay(10);
-  Amy9 = cmMsecY;
-  delay(10);
-  Amy10 = cmMsecY;
-  delay(10);
-  somay = (Amy1 + Amy2 + Amy3 + Amy4 + Amy5 + Amy6 + Amy7 + Amy8 + Amy9 + Amy10);
-  mediay = (somay / 10);
+  original = cmMsecY
+
+   filtrado = moving_average();
 
 
 
@@ -307,8 +281,29 @@ void loop() {
   Serial.print(" Iy: ");
   Serial.print(Ix);
   Serial.print(" Dy: ");
-  Serial.println(Dx);
+  Serial.print(Dx);
+  Serial.print(original);
+   Serial.print(" ");
+   Serial.println(filtrado);
 
 
 
 }
+// --- Desenvolvimento da Função Media Movel--
+long moving_average()
+{
+
+   //desloca os elementos do vetor de média móvel
+   for(int i= nPy-1; i>0; i--) numbers[i] = numbers[i-1];
+
+   numbers[0] = original; //posição inicial do vetor recebe a leitura original
+
+   long acc = 0;          //acumulador para somar os pontos da média móvel
+
+   for(int i=0; i<nPy; i++) acc += numbers[i]; //faz a somatória do número de pontos
+
+
+   return acc/nPy;  //retorna a média móvel
+
+ 
+} //end moving_average
