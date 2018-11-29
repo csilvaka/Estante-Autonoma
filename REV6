@@ -1,0 +1,314 @@
+/* Multiplos controle de um Estoque Automatizado e Inteligente
+  10º Semestre de Engenharia de Automação e Controle - Centro Universitario de Jaguariuna - Campus II - Jaguariùna - SP
+  Trabalho de Conclusão de Curso - Estante Autonoma
+  autor: Kaio Silva
+  Versão 01 - 26/10/2018 */
+
+
+
+#include <Ultrasonic.h>
+
+//SensorX=Sensor 1
+#define pino_trigger1 8//Sensor X
+#define pino_echo1 7//Sensor X
+float cmMsecX;
+float lastcmMsecX;
+double setPointx = 29.5;
+double  KPx = 10, KIx = 5, KDx = 0;
+double  Px = 0, Ix = 0, Dx = 0;
+double PIDx = 0;
+double FowardPWMx = 0;
+double ReversePWMx = 0;
+double errorX = 0;
+
+
+//MotorX= Motor 1
+#define Rpwmx 3//Motor X Direta
+#define Lpwmx 9//Motor X Esquerda
+
+//SensorY=Sensor 2
+#define pino_trigger2 13//Sensor Y
+#define pino_echo2 12//Sensor Y
+float cmMsecY;
+float lastcmMsecY;
+double setPointy = 50;
+double  KPy = 5, KIy = 3, KDy = 3 ;
+double  Py = 0, Iy = 0, Dy = 0;
+double PIDy = 0;
+double FowardPWMy = 0;
+double ReversePWMy = 0;
+double errorY = 0;
+float Amy1;
+float Amy2;
+float Amy3;
+float Amy4;
+float Amy5;
+float Amy6;
+float Amy7;
+float Amy8;
+float Amy9;
+float Amy10;
+float somay;
+float mediay;
+
+//MotorY= Motor 2
+#define Rpwmy 10// Motor Y Direita
+#define Lpwmy 11//Motor Y Esquerda
+
+//Imã
+int Ima = 2;
+
+
+//Trava Eixo X
+int Trava = 4;
+
+
+
+
+
+long lastProcess;
+Ultrasonic ultrasonic1(pino_trigger1, pino_echo1);
+Ultrasonic ultrasonic2(pino_trigger2, pino_echo2);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(Rpwmx, OUTPUT);
+  pinMode(Lpwmx, OUTPUT);
+  pinMode(Rpwmy, OUTPUT);
+  pinMode(Lpwmy, OUTPUT);
+  pinMode(Ima, OUTPUT);
+  pinMode(Trava, OUTPUT);
+  digitalWrite(Ima, LOW);
+  digitalWrite(Trava, LOW);
+  lastProcess = millis();
+
+
+}
+
+
+void loop() {
+
+
+
+  //  Calculo e leitura das distancias X e Y dos sensores ultrassonicos
+
+  //sensor X
+  long microsecX = ultrasonic1.timing();
+  cmMsecX = ultrasonic1.convert(microsecX, Ultrasonic::CM);
+
+
+
+  //Sensor Y
+  long microsecY = ultrasonic2.timing();
+  cmMsecY = ultrasonic2.convert(microsecY, Ultrasonic::CM);
+
+  Amy1 = cmMsecY;
+  delay(10);
+  Amy2 = cmMsecY;
+  delay(10);
+  Amy3 = cmMsecY;
+  delay(10);
+  Amy4 = cmMsecY;
+  delay(10);
+  Amy5 = cmMsecY;
+  delay(10);
+  Amy6 = cmMsecY;
+  delay(10);
+  Amy7 = cmMsecY;
+  delay(10);
+  Amy8 = cmMsecY;
+  delay(10);
+  Amy9 = cmMsecY;
+  delay(10);
+  Amy10 = cmMsecY;
+  delay(10);
+  somay = (Amy1 + Amy2 + Amy3 + Amy4 + Amy5 + Amy6 + Amy7 + Amy8 + Amy9 + Amy10);
+  mediay = (somay / 10);
+
+
+
+  //implementação PID
+  errorX = setPointx - cmMsecX;
+  errorY = setPointy - mediay;
+
+  float deltatime = (millis() - lastProcess) / 1000.0;
+  lastProcess = millis();
+
+  Px = errorX * KPx;
+  Py = errorY * KPy;
+
+  Ix += (errorX * KIx) * deltatime;
+  Iy += (errorY * KIy) * deltatime;
+
+  Dx = (cmMsecX - lastcmMsecX) * KDx / deltatime;
+  Dy = (mediay - lastcmMsecY) * KDy / deltatime;
+  lastcmMsecX = cmMsecX;
+  lastcmMsecY = mediay;
+
+  PIDx =  Px + Ix + Dx;
+  PIDy = Py + Iy + Dy;
+
+  //Limitação em X
+  if (Px >= 255)
+  {
+    Px = 255;
+  }
+  if (Px <= -255)
+  {
+    Px = -255;
+  }
+
+  if (Ix >= 255)
+  {
+    Ix = 255;
+  }
+  if (Ix <= -255)
+  {
+    Ix = -255;
+  }
+  if (Dx >= 255)
+  {
+    Dx = 255;
+  }
+  if (Dx <= -255)
+  {
+    Dx = -255;
+  }
+  if (PIDx >= 255)
+  {
+    PIDx = 255;
+  }
+  if (PIDx <= -255)
+  {
+    PIDx = -255;
+  }
+
+  //Limitação em Y
+  if (Py >= 255)
+  {
+    Py = 255;
+  }
+  if (Py <= -255)
+  {
+    Py = -255;
+  }
+
+  if (Iy >= 255)
+  {
+    Iy = 255;
+  }
+  if (Iy <= -255)
+  {
+    Iy = -255;
+  }
+  if (Dy > 255)
+  {
+    Dy = 255;
+  }
+  if (Dy <= -255)
+  {
+    Dy = -255;
+  }
+  if (PIDy >= 255)
+  {
+    PIDy = 255;
+  }
+  if (PIDy <= -255)
+  {
+    PIDy = -255;
+  }
+
+  PIDx = abs(PIDx);
+  PIDy = abs(PIDy);
+
+  PIDx = map(PIDx,  4,  255, 0, 255);
+  PIDy = map(PIDy,  0,  255, 0, 100);
+
+  //Saída em X
+  if (errorX < 0)
+  {
+    // reverse rotation
+    ReversePWMx = PIDx;
+    FowardPWMx = 0;
+    analogWrite(Lpwmx, FowardPWMx);
+    analogWrite(Rpwmx, ReversePWMx);
+  } else {
+    // forward rotation
+    FowardPWMx = PIDx;
+    ReversePWMx = 0;
+    analogWrite(Lpwmx, FowardPWMx);
+    analogWrite(Rpwmx, ReversePWMx);
+  }
+
+  //Saída em Y
+  if (errorY < 0)
+  {
+    // reverse rotation
+
+    ReversePWMy = (PIDy);
+    FowardPWMy = 0;
+    analogWrite(Lpwmy, FowardPWMy);
+    analogWrite(Rpwmy, ReversePWMy);
+  } else {
+    // forward rotation
+
+    FowardPWMy = (PIDy);
+    ReversePWMy = 0;
+    analogWrite(Lpwmy, FowardPWMy);
+    analogWrite(Rpwmy, ReversePWMy);
+  }
+  if (errorX < 1)
+  {
+    digitalWrite(Ima, LOW);
+  }
+  if (errorX <= 0.6 && errorX > -0.6)
+  {
+    PIDx = 0;
+    ReversePWMy = 0;
+    FowardPWMy = 0;
+  }
+  if (errorX > -0.6)
+  {
+    PIDx = 0;
+    ReversePWMy = 0;
+    FowardPWMy = 0;
+  }
+
+
+  //Exibe informacoes no serial monitor
+  Serial.print(" DistanciaX em cm: ");
+  Serial.print(cmMsecX);
+  Serial.print(" Erro em X  ");
+  Serial.print(errorX);
+
+  Serial.print(" ReverseX: ");
+  Serial.print(ReversePWMx);
+  Serial.print(" FowardX: ");
+  Serial.print(FowardPWMx);
+
+
+  /*
+    Serial.print(" DistanciaY em cm: ");
+    Serial.print(mediay);
+    Serial.print(" Erro em Y  ");
+    Serial.print(errorY);
+
+    Serial.print(" ReverseY: ");
+    Serial.print(ReversePWMy);
+    Serial.print(" FowardY: ");
+    Serial.println(FowardPWMy);
+    //    Serial.print(" ima: ");
+    // Serial.print(Ima);
+    //   Serial.print(" Trava: ");
+    //Serial.println(Trava);
+  */
+  Serial.print(" Py: ");
+  Serial.print(Px);
+  Serial.print(" Iy: ");
+  Serial.print(Ix);
+  Serial.print(" Dy: ");
+  Serial.println(Dx);
+
+
+
+}
